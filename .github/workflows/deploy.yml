@@ -18,13 +18,17 @@ jobs:
           host: 13.233.127.12
           username: ubuntu
           key: ${{ secrets.PRIVATE_SSH_KEY }}
-          passphrase: ${{ secrets.PRIVATE_SSH_KEY_PASSPHRASE }} # only if you set one
+          passphrase: ${{ secrets.PRIVATE_SSH_KEY_PASSPHRASE }}
           port: 22
           script: | 
-            whoami
-            ls
+            # Load NVM so npm and pm2 are available in the SSH session
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+            
             cd 100xdev-ci-cd/
             git pull origin main
             npm install 
             npm run build 
-            npm run start
+            
+            # Restart the PM2 process if it exists, otherwise start a new one
+            pm2 restart next-app || pm2 start npm --name "next-app" -- start
